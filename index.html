@@ -4,503 +4,229 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>宅建 語呂合わせAI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --ink: #1c1917;
-  --paper: #faf7f2;
-  --paper2: #f0ebe2;
-  --red: #c0392b;
-  --red-light: #fdf0ef;
-  --gold: #b7893a;
-  --gold-light: #fdf6e3;
-  --teal: #1a7a6e;
-  --teal-light: #e8f5f3;
-  --muted: #78716c;
-  --border: #d6cfc4;
-  --shadow: rgba(28,25,23,0.08);
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1c1917;--paper:#faf7f2;--paper2:#f0ebe2;
+  --red:#c0392b;--red-light:#fdf0ef;
+  --gold:#b7893a;--gold-light:#fdf6e3;
+  --teal:#1a7a6e;--teal-light:#e8f5f3;
+  --muted:#78716c;--border:#d6cfc4;--shadow:rgba(28,25,23,.08);
 }
+body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;min-height:100vh;padding:28px 16px 80px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(0,0,0,.012) 28px,rgba(0,0,0,.012) 29px)}
+.wrap{width:100%;max-width:600px;margin:0 auto;position:relative;z-index:1}
 
-body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: 'Noto Sans JP', sans-serif;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding: 32px 16px 64px;
-}
+/* HEADER */
+header{text-align:center;margin-bottom:28px}
+.logo-mark{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:var(--paper);
+  font-size:11px;font-weight:700;letter-spacing:3px;padding:5px 14px;border-radius:2px;margin-bottom:14px}
+header h1{font-family:'Kaisei Decol',serif;font-size:clamp(24px,5vw,36px);font-weight:700;line-height:1.25}
+header h1 em{font-style:normal;color:var(--red)}
+header p{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.7}
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-    0deg, transparent, transparent 28px, rgba(0,0,0,0.012) 28px, rgba(0,0,0,0.012) 29px
-  );
-  pointer-events: none;
-  z-index: 0;
-}
+/* TABS */
+.tabs{display:flex;margin-bottom:20px;border-bottom:2px solid var(--border)}
+.tab{padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);
+  border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--red);border-bottom-color:var(--red)}
+.panel{display:none}
+.panel.active{display:block}
 
-.wrap {
-  width: 100%;
-  max-width: 600px;
-  position: relative;
-  z-index: 1;
-}
+/* FORM CARD */
+.form-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;
+  padding:22px;box-shadow:0 2px 16px var(--shadow);margin-bottom:20px}
+.field+.field{margin-top:18px}
+.field-label{display:block;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--muted);margin-bottom:8px}
+.field input[type="text"]{width:100%;border:1.5px solid var(--border);border-radius:8px;
+  padding:11px 13px;font-family:'Noto Sans JP',sans-serif;font-size:15px;
+  color:var(--ink);background:var(--paper);outline:none;transition:border-color .18s}
+.field input[type="text"]:focus{border-color:var(--ink);background:#fff}
+.field input[type="text"]::placeholder{color:#b8b0a8}
+.style-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.style-btn{cursor:pointer;border:1.5px solid var(--border);border-radius:8px;
+  background:var(--paper2);padding:10px 12px;text-align:left;transition:all .15s;user-select:none}
+.style-btn:hover{border-color:var(--ink)}
+.style-btn.on{border-color:var(--red);background:var(--red-light)}
+.style-btn .s-icon{font-size:17px;display:block;margin-bottom:3px}
+.style-btn .s-name{font-size:12px;font-weight:700;color:var(--ink);display:block}
+.style-btn .s-desc{font-size:10px;color:var(--muted);display:block;margin-top:2px;line-height:1.4}
+.style-btn.on .s-name{color:var(--red)}
+.btn-gen{width:100%;margin-top:20px;padding:14px;background:var(--ink);color:var(--paper);border:none;
+  border-radius:8px;font-family:'Kaisei Decol',serif;font-size:16px;font-weight:700;
+  cursor:pointer;letter-spacing:1px;transition:background .15s,transform .1s;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-gen:hover:not(:disabled){background:#2c2926;transform:translateY(-1px)}
+.btn-gen:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.examples-row{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ex-label{font-size:11px;color:var(--muted)}
+.ex-chip{font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid var(--border);
+  background:#fff;color:var(--muted);cursor:pointer;transition:all .15s}
+.ex-chip:hover{border-color:var(--red);color:var(--red)}
 
-header {
-  text-align: center;
-  margin-bottom: 36px;
-}
+/* SINGLE RESULT */
+#loading{display:none;text-align:center;padding:32px 0}
+.spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--ink);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{font-size:13px;color:var(--muted);animation:blink 1.4s ease infinite}
+@keyframes blink{0%,100%{opacity:.4}50%{opacity:1}}
+#result{display:none;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
-.logo-mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--ink);
-  color: var(--paper);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  padding: 5px 14px;
-  border-radius: 2px;
-  margin-bottom: 16px;
-}
+/* GORO CARD */
+.goro-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;
+  overflow:hidden;box-shadow:0 3px 16px var(--shadow);margin-bottom:14px}
+.rc-band{background:var(--ink);color:var(--paper);padding:11px 18px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rc-band .q-text{font-size:13px;font-weight:700;flex:1}
+.rc-band .style-tag{font-size:11px;color:rgba(255,255,255,.5);margin-left:auto}
+.rc-phrase{padding:22px 20px 16px;text-align:center;border-bottom:1px solid var(--border)}
+.rc-phrase .phrase-label{font-size:10px;font-weight:700;letter-spacing:3px;color:var(--red);margin-bottom:10px}
+.rc-phrase .phrase-main{font-family:'Kaisei Decol',serif;font-size:clamp(19px,4vw,28px);font-weight:700;line-height:1.4;color:var(--ink)}
+.rc-phrase .phrase-rhythm{margin-top:6px;font-size:12px;color:var(--muted);letter-spacing:1px}
+.rc-section{padding:14px 20px;border-bottom:1px solid var(--paper2)}
+.rc-section:last-of-type{border-bottom:none}
+.section-label{font-size:10px;font-weight:700;letter-spacing:2.5px;margin-bottom:8px}
+.story-text{font-size:13px;line-height:1.85;color:#3a3330;background:var(--paper2);
+  border-radius:8px;padding:12px 14px;border-left:3px solid var(--gold)}
+.map-list{display:flex;flex-direction:column}
+.map-row{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px dashed var(--paper2);font-size:13px}
+.map-row:last-child{border-bottom:none}
+.map-key{background:var(--gold-light);border:1px solid #e8d5a3;border-radius:5px;
+  padding:2px 8px;font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap;flex-shrink:0}
+.map-val{color:var(--ink);line-height:1.6}
+.tip-box{background:var(--teal-light);border:1px solid #b2d8d3;border-radius:8px;
+  padding:10px 13px;font-size:13px;line-height:1.7;color:var(--teal)}
+.rc-actions{padding:12px 18px;background:var(--paper2);display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border)}
+.act-btn{font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:700;padding:6px 13px;
+  border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;transition:all .15s}
+.act-btn:hover{border-color:var(--ink);color:var(--ink)}
+.act-btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.act-btn.primary:hover{background:#a93226}
+.error-box{background:#fdf0ef;border:1px solid #f5c6c3;border-radius:8px;
+  padding:13px 15px;font-size:13px;color:var(--red);line-height:1.7;margin-bottom:14px}
 
-header h1 {
-  font-family: 'Kaisei Decol', serif;
-  font-size: clamp(26px, 6vw, 40px);
-  font-weight: 700;
-  line-height: 1.25;
-}
+/* SAVED */
+.saved-wrap{margin-top:28px;border-top:1px solid var(--border);padding-top:18px}
+.saved-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.saved-header h3{font-size:12px;font-weight:700;letter-spacing:2px;color:var(--muted)}
+.saved-clear{font-size:11px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:inherit;text-decoration:underline}
+.saved-list{display:flex;flex-direction:column;gap:6px}
+.saved-item{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);
+  border-radius:8px;padding:9px 13px;cursor:pointer;transition:border-color .15s}
+.saved-item:hover{border-color:var(--ink)}
+.saved-phrase{font-family:'Kaisei Decol',serif;font-size:14px;font-weight:700;color:var(--red);flex:1}
+.saved-topic{font-size:11px;color:var(--muted)}
+.saved-empty{text-align:center;font-size:13px;color:var(--muted);padding:10px 0}
 
-header h1 em {
-  font-style: normal;
-  color: var(--red);
-}
+/* ── BULK PANEL ── */
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:40px 20px;
+  text-align:center;cursor:pointer;transition:all .2s;background:#fff;margin-bottom:16px}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--red);background:var(--red-light)}
+.upload-zone .uz-icon{font-size:40px;margin-bottom:12px}
+.upload-zone .uz-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.upload-zone .uz-sub{font-size:12px;color:var(--muted);line-height:1.8}
+.upload-zone input[type="file"]{display:none}
+.uz-btn{display:inline-block;margin-top:14px;padding:9px 22px;background:var(--ink);
+  color:#fff;border-radius:6px;font-size:13px;font-weight:700}
 
-header p {
-  margin-top: 10px;
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.7;
-}
+.parsed-preview{background:#fff;border:1.5px solid var(--border);border-radius:10px;
+  padding:16px;margin-bottom:16px;display:none}
+.parsed-preview h3{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:2px;margin-bottom:10px}
+.parsed-scroll{max-height:220px;overflow-y:auto}
+.parsed-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;
+  border-bottom:1px solid var(--paper2);font-size:13px}
+.parsed-item:last-child{border-bottom:none}
+.parsed-num{color:var(--muted);font-size:11px;flex-shrink:0;padding-top:2px;min-width:28px}
+.parsed-q{flex:1;color:var(--ink);line-height:1.5}
+.parsed-a{color:var(--muted);font-size:11px;margin-top:2px}
 
-.form-card {
-  background: #fff;
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 16px var(--shadow);
-  margin-bottom: 24px;
-}
+/* anki format note */
+.anki-note{background:var(--teal-light);border:1px solid #b2d8d3;border-radius:8px;
+  padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--teal);line-height:1.8;display:none}
+.anki-note strong{font-weight:700}
 
-.field + .field { margin-top: 20px; }
+/* batch controls */
+.batch-ctrl{background:#fff;border:1.5px solid var(--border);border-radius:10px;
+  padding:18px;margin-bottom:16px;display:none}
+.batch-ctrl label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--muted);display:block;margin-bottom:8px}
+.batch-row{display:flex;gap:10px;align-items:center}
+.batch-style-select{flex:1;background:var(--paper2);border:1.5px solid var(--border);border-radius:8px;
+  color:var(--ink);font-family:'Noto Sans JP',sans-serif;font-size:13px;padding:10px 12px;outline:none;cursor:pointer}
+.btn-batch{padding:11px 24px;background:var(--red);color:#fff;border:none;border-radius:8px;
+  font-family:'Kaisei Decol',serif;font-size:15px;font-weight:700;cursor:pointer;
+  white-space:nowrap;transition:all .15s}
+.btn-batch:hover:not(:disabled){background:#a93226}
+.btn-batch:disabled{opacity:.45;cursor:not-allowed}
 
-.field-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: var(--muted);
-  margin-bottom: 8px;
-}
+/* PROGRESS */
+.progress-box{background:#fff;border:1.5px solid var(--border);border-radius:12px;
+  padding:24px;box-shadow:0 2px 16px var(--shadow);display:none;margin-bottom:16px}
+.progress-box h3{font-family:'Kaisei Decol',serif;font-size:17px;font-weight:700;margin-bottom:18px;text-align:center}
+.prog-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.prog-label{font-size:12px;font-weight:700;color:var(--ink)}
+.prog-count{font-size:13px;font-weight:700;color:var(--red)}
+.prog-bar-bg{background:var(--paper2);border-radius:8px;height:10px;overflow:hidden;margin-bottom:10px}
+.prog-bar{background:linear-gradient(90deg,var(--red),var(--gold));height:100%;border-radius:8px;width:0%;transition:width .4s ease}
+.prog-current{font-size:12px;color:var(--muted);margin-bottom:4px;min-height:18px}
+.prog-status{font-size:11px;color:var(--muted)}
+.prog-error-count{font-size:11px;color:var(--red);margin-top:4px;min-height:16px}
+.btn-stop{margin-top:14px;padding:7px 16px;border:1.5px solid var(--border);border-radius:6px;
+  background:#fff;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;width:100%}
+.btn-stop:hover{border-color:var(--red);color:var(--red)}
 
-.field input[type="text"] {
-  width: 100%;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 14px;
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 15px;
-  color: var(--ink);
-  background: var(--paper);
-  outline: none;
-  transition: border-color .18s;
-}
-
-.field input[type="text"]:focus { border-color: var(--ink); background: #fff; }
-.field input[type="text"]::placeholder { color: #b8b0a8; }
-
-.style-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.style-btn {
-  cursor: pointer;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  background: var(--paper2);
-  padding: 10px 12px;
-  text-align: left;
-  transition: all .15s;
-  user-select: none;
-}
-
-.style-btn:hover { border-color: var(--ink); }
-.style-btn.on { border-color: var(--red); background: var(--red-light); }
-
-.style-btn .s-icon { font-size: 18px; display: block; margin-bottom: 4px; }
-.style-btn .s-name { font-size: 12px; font-weight: 700; color: var(--ink); display: block; }
-.style-btn .s-desc { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; line-height: 1.4; }
-.style-btn.on .s-name { color: var(--red); }
-
-.btn-gen {
-  width: 100%;
-  margin-top: 24px;
-  padding: 15px;
-  background: var(--ink);
-  color: var(--paper);
-  border: none;
-  border-radius: 8px;
-  font-family: 'Kaisei Decol', serif;
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-  letter-spacing: 1px;
-  transition: background .15s, transform .1s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.btn-gen:hover:not(:disabled) { background: #2c2926; transform: translateY(-1px); }
-.btn-gen:disabled { opacity: .45; cursor: not-allowed; transform: none; }
-
-.examples-row {
-  margin-top: 14px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-
-.ex-label { font-size: 11px; color: var(--muted); }
-
-.ex-chip {
-  font-size: 11px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #fff;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all .15s;
-}
-
-.ex-chip:hover { border-color: var(--red); color: var(--red); }
-
-/* Result */
-#result { display: none; animation: fadeUp .4s ease; }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.result-card {
-  background: #fff;
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 24px var(--shadow);
-}
-
-.rc-band {
-  background: var(--ink);
-  color: var(--paper);
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.rc-band .topic-tag {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  background: rgba(255,255,255,.15);
-  padding: 2px 9px;
-  border-radius: 3px;
-}
-
-.rc-band .style-tag {
-  font-size: 11px;
-  color: rgba(255,255,255,.6);
-  margin-left: auto;
-}
-
-.rc-phrase {
-  padding: 28px 24px 20px;
-  text-align: center;
-  border-bottom: 1px solid var(--border);
-}
-
-.rc-phrase .phrase-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  color: var(--red);
-  margin-bottom: 12px;
-}
-
-.rc-phrase .phrase-main {
-  font-family: 'Kaisei Decol', serif;
-  font-size: clamp(22px, 5vw, 32px);
-  font-weight: 700;
-  line-height: 1.4;
-  color: var(--ink);
-}
-
-.rc-phrase .phrase-rhythm {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--muted);
-  letter-spacing: 1px;
-}
-
-.rc-section {
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--paper2);
-}
-
-.rc-section:last-of-type { border-bottom: none; }
-
-.section-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 2.5px;
-  margin-bottom: 10px;
-}
-
-.story-text {
-  font-size: 14px;
-  line-height: 1.85;
-  color: #3a3330;
-  background: var(--paper2);
-  border-radius: 8px;
-  padding: 14px 16px;
-  border-left: 3px solid var(--gold);
-}
-
-.map-list { display: flex; flex-direction: column; }
-
-.map-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px dashed var(--paper2);
-  font-size: 14px;
-}
-
-.map-row:last-child { border-bottom: none; }
-
-.map-key {
-  background: var(--gold-light);
-  border: 1px solid #e8d5a3;
-  border-radius: 5px;
-  padding: 2px 9px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--gold);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.map-val { color: var(--ink); line-height: 1.6; }
-
-.tip-box {
-  background: var(--teal-light);
-  border: 1px solid #b2d8d3;
-  border-radius: 8px;
-  padding: 12px 14px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--teal);
-}
-
-.rc-actions {
-  padding: 14px 20px;
-  background: var(--paper2);
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  border-top: 1px solid var(--border);
-}
-
-.act-btn {
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 7px 14px;
-  border-radius: 6px;
-  border: 1.5px solid var(--border);
-  background: #fff;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all .15s;
-}
-
-.act-btn:hover { border-color: var(--ink); color: var(--ink); }
-.act-btn.primary { background: var(--red); border-color: var(--red); color: #fff; }
-.act-btn.primary:hover { background: #a93226; }
-
-/* Loading */
-#loading { display: none; text-align: center; padding: 36px 0; }
-
-.spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid var(--border);
-  border-top-color: var(--ink);
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
-  margin: 0 auto 14px;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-#loading p {
-  font-size: 13px;
-  color: var(--muted);
-  animation: blink 1.4s ease infinite;
-}
-
-@keyframes blink { 0%,100%{opacity:.4} 50%{opacity:1} }
-
-.error-box {
-  background: #fdf0ef;
-  border: 1px solid #f5c6c3;
-  border-radius: 8px;
-  padding: 14px 16px;
-  font-size: 13px;
-  color: var(--red);
-  line-height: 1.7;
-}
-
-/* Saved */
-.saved-wrap {
-  margin-top: 32px;
-  border-top: 1px solid var(--border);
-  padding-top: 20px;
-}
-
-.saved-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.saved-header h3 {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: var(--muted);
-}
-
-.saved-clear {
-  font-size: 11px;
-  color: var(--muted);
-  cursor: pointer;
-  background: none;
-  border: none;
-  font-family: inherit;
-  text-decoration: underline;
-}
-
-.saved-list { display: flex; flex-direction: column; gap: 6px; }
-
-.saved-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: border-color .15s;
-}
-
-.saved-item:hover { border-color: var(--ink); }
-
-.saved-phrase {
-  font-family: 'Kaisei Decol', serif;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--red);
-  flex: 1;
-}
-
-.saved-topic {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.saved-empty {
-  text-align: center;
-  font-size: 13px;
-  color: var(--muted);
-  padding: 12px 0;
-}
+/* DONE BOX */
+.done-box{background:var(--teal-light);border:1.5px solid #b2d8d3;border-radius:12px;
+  padding:24px;text-align:center;display:none;margin-bottom:16px;animation:fadeUp .4s ease}
+.done-box .done-icon{font-size:40px;margin-bottom:10px}
+.done-box h3{font-family:'Kaisei Decol',serif;font-size:20px;font-weight:700;color:var(--teal);margin-bottom:6px}
+.done-box p{font-size:13px;color:var(--teal);margin-bottom:18px;line-height:1.7}
+.btn-dl{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;
+  background:var(--teal);color:#fff;border:none;border-radius:8px;
+  font-family:'Kaisei Decol',serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-dl:hover{background:#155f55;transform:translateY(-1px)}
+.btn-dl-again{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:9px 20px;
+  background:#fff;color:var(--teal);border:1.5px solid #b2d8d3;border-radius:8px;
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-dl-again:hover{background:var(--teal);color:#fff}
+.done-error-note{font-size:11px;color:#c0392b;margin-top:8px}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <header>
-    <div class="logo-mark">🏠 宅建AI</div>
-    <h1>語呂合わせ<br><em>ジェネレーター</em></h1>
-    <p>条文・数字・ルールを入力するだけで<br>記憶に焼き付くオリジナル語呂合わせを生成</p>
-  </header>
+<header>
+  <div class="logo-mark">🏠 宅建AI</div>
+  <h1>語呂合わせ<br><em>ジェネレーター</em></h1>
+  <p>キーワード入力で1問生成、またはファイル一括アップロードでAnkiカードを作成</p>
+</header>
 
+<div class="tabs">
+  <div class="tab active" data-tab="single">✏️ 1問ずつ</div>
+  <div class="tab" data-tab="bulk">📄 ファイル一括 → Ankiカード</div>
+</div>
+
+<!-- ══ SINGLE ══ -->
+<div class="panel active" id="panel-single">
   <div class="form-card">
-
     <div class="field">
       <label class="field-label">📝 覚えたいキーワード・数字・条文</label>
       <input type="text" id="keyword" placeholder="例：クーリングオフ 8日間 申込場所以外" maxlength="120">
     </div>
-
     <div class="field">
       <label class="field-label">🎨 スタイル（複数選択可）</label>
       <div class="style-grid">
-        <div class="style-btn on" data-v="story">
-          <span class="s-icon">🎭</span>
-          <span class="s-name">ストーリー</span>
-          <span class="s-desc">登場人物が動く<br>ドラマ仕立て</span>
-        </div>
-        <div class="style-btn on" data-v="dajare">
-          <span class="s-icon">🎯</span>
-          <span class="s-name">ダジャレ・音遊び</span>
-          <span class="s-desc">数字・音の<br>クスっと読み換え</span>
-        </div>
-        <div class="style-btn on" data-v="henteko">
-          <span class="s-icon">🦄</span>
-          <span class="s-name">ヘンテコ・シュール</span>
-          <span class="s-desc">宇宙人・食べ物…<br>意外な組み合わせ</span>
-        </div>
-        <div class="style-btn on" data-v="song">
-          <span class="s-icon">🎵</span>
-          <span class="s-name">歌・リズム</span>
-          <span class="s-desc">口ずさめる<br>リズム語呂</span>
-        </div>
+        <div class="style-btn on" data-v="story"><span class="s-icon">🎭</span><span class="s-name">ストーリー</span><span class="s-desc">登場人物が動くドラマ仕立て</span></div>
+        <div class="style-btn on" data-v="dajare"><span class="s-icon">🎯</span><span class="s-name">ダジャレ・音遊び</span><span class="s-desc">数字・音のクスっと読み換え</span></div>
+        <div class="style-btn on" data-v="henteko"><span class="s-icon">🦄</span><span class="s-name">ヘンテコ・シュール</span><span class="s-desc">宇宙人・食べ物…意外な組み合わせ</span></div>
+        <div class="style-btn on" data-v="song"><span class="s-icon">🎵</span><span class="s-name">歌・リズム</span><span class="s-desc">口ずさめるリズム語呂</span></div>
       </div>
     </div>
-
-    <button class="btn-gen" id="genBtn" onclick="generate()">
-      ⚡ 語呂合わせを生成する
-    </button>
-
+    <button class="btn-gen" id="genBtn" onclick="generateSingle()">⚡ 語呂合わせを生成する</button>
     <div class="examples-row">
       <span class="ex-label">例：</span>
       <span class="ex-chip" onclick="setEx('クーリングオフ 8日間 申込場所以外')">クーリングオフ</span>
@@ -508,65 +234,121 @@ header p {
       <span class="ex-chip" onclick="setEx('建蔽率・容積率の数値')">建蔽率・容積率</span>
       <span class="ex-chip" onclick="setEx('不動産取得税 免税点 土地・家屋')">不動産取得税</span>
       <span class="ex-chip" onclick="setEx('根保証 個人保証 極度額 書面')">根保証</span>
-      <span class="ex-chip" onclick="setEx('重要事項説明 35条 書面 交付')">重要事項説明</span>
     </div>
   </div>
-
-  <div id="loading">
-    <div class="spinner"></div>
-    <p id="loadingMsg">語呂合わせを考え中…</p>
-  </div>
-
+  <div id="loading"><div class="spinner"></div><p id="loadingMsg">語呂合わせを考え中…</p></div>
   <div id="result"></div>
-
   <div class="saved-wrap">
-    <div class="saved-header">
-      <h3>⭐ 保存済み</h3>
-      <button class="saved-clear" onclick="clearSaved()">すべて削除</button>
-    </div>
+    <div class="saved-header"><h3>⭐ 保存済み</h3><button class="saved-clear" onclick="clearSaved()">すべて削除</button></div>
     <div class="saved-list" id="savedList"></div>
   </div>
+</div>
+
+<!-- ══ BULK ══ -->
+<div class="panel" id="panel-bulk">
+
+  <div class="upload-zone" id="uploadZone">
+    <div class="uz-icon">📄</div>
+    <div class="uz-title">テキストファイルをドロップ</div>
+    <div class="uz-sub">
+      タブ区切り（Q&lt;TAB&gt;A）または「Q: 〜 / A: 〜」形式<br>
+      Ankiエクスポート・手書きテキスト両方対応
+    </div>
+    <div class="uz-btn">📂 ファイルを選択</div>
+    <input type="file" id="fileInput" accept=".txt,.tsv,.csv">
+  </div>
+
+  <div class="parsed-preview" id="parsedPreview">
+    <h3>📋 読み込み結果</h3>
+    <div class="parsed-scroll" id="parsedList"></div>
+  </div>
+
+  <div class="anki-note" id="ankiNote">
+    <strong>📥 出力フォーマット（Ankiインポート用タブ区切りTXT）</strong><br>
+    <strong>表（フィールド1）</strong>：質問文<br>
+    <strong>裏（フィールド2）</strong>：答え<br>
+    <strong>備考（フィールド3）</strong>：💡語呂合わせ ／ 📖ストーリー ／ 🔗対応関係 ／ ⚠️試験ポイント
+  </div>
+
+  <div class="batch-ctrl" id="batchCtrl">
+    <label>🎨 語呂合わせスタイル</label>
+    <div class="batch-row">
+      <select class="batch-style-select" id="batchStyle">
+        <option value="story">🎭 ストーリー仕立て</option>
+        <option value="dajare">🎯 ダジャレ・音遊び</option>
+        <option value="henteko">🦄 ヘンテコ・シュール</option>
+        <option value="song">🎵 歌・リズム</option>
+        <option value="mix">🎲 おまかせミックス</option>
+      </select>
+      <button class="btn-batch" id="batchBtn" onclick="startBatch()">⚡ 一括生成</button>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-box" id="progressBox">
+    <h3>🔄 語呂合わせ生成中…</h3>
+    <div class="prog-meta">
+      <span class="prog-label">進捗</span>
+      <span class="prog-count" id="progCount">0 / 0</span>
+    </div>
+    <div class="prog-bar-bg"><div class="prog-bar" id="progBar"></div></div>
+    <div class="prog-current" id="progCurrent"></div>
+    <div class="prog-status" id="progStatus"></div>
+    <div class="prog-error-count" id="progErrors"></div>
+    <button class="btn-stop" onclick="stopBatch()">⏹ 停止する</button>
+  </div>
+
+  <!-- Done -->
+  <div class="done-box" id="doneBox">
+    <div class="done-icon">✅</div>
+    <h3 id="doneTitle">生成完了！</h3>
+    <p id="doneDesc"></p>
+    <button class="btn-dl" onclick="downloadAnkiTsv()">💾 Ankiカード用TXTをダウンロード</button>
+    <br>
+    <button class="btn-dl-again" onclick="resetBulk()">🔄 別のファイルで再生成</button>
+    <div class="done-error-note" id="doneErrorNote"></div>
+  </div>
+
+</div><!-- /panel-bulk -->
 
 </div>
 <script>
+// ── STATE ──
 let selectedStyles = new Set(['story','dajare','henteko','song']);
 let savedItems = [];
-try { savedItems = JSON.parse(localStorage.getItem('tgoro_v2') || '[]'); } catch{}
+try { savedItems = JSON.parse(localStorage.getItem('tgoro_v2')||'[]'); } catch{}
+let parsedItems = [];
+let batchResults = [];
+let stopFlag = false;
 
-document.querySelectorAll('.style-btn').forEach(b => {
-  b.addEventListener('click', () => {
-    b.classList.toggle('on');
-    if (b.classList.contains('on')) selectedStyles.add(b.dataset.v);
-    else selectedStyles.delete(b.dataset.v);
+// ── TABS ──
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-' + t.dataset.tab).classList.add('active');
   });
 });
 
-function setEx(kw) {
-  document.getElementById('keyword').value = kw;
-}
+// ── STYLE BTNS ──
+document.querySelectorAll('.style-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    b.classList.toggle('on');
+    selectedStyles[b.classList.contains('on') ? 'add' : 'delete'](b.dataset.v);
+  });
+});
 
-function esc(s) {
-  return String(s||'')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+// ── HELPERS ──
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function setEx(kw){ document.getElementById('keyword').value = kw; }
 
-const loadingTexts = ['語呂合わせを考え中…','記憶に残るフレーズを探索中…','試験対策AIが全力思考中…','ユニークな語呂合わせを生成中…'];
+const loadingTexts = ['語呂合わせを考え中…','記憶に残るフレーズを探索中…','AIが全力思考中…','ユニークな語呂合わせを生成中…'];
 let loadingTimer;
+function showLoading(){ let i=0; document.getElementById('loadingMsg').textContent=loadingTexts[0]; loadingTimer=setInterval(()=>{ i=(i+1)%loadingTexts.length; document.getElementById('loadingMsg').textContent=loadingTexts[i]; },1800); document.getElementById('loading').style.display='block'; document.getElementById('result').style.display='none'; }
+function hideLoading(){ clearInterval(loadingTimer); document.getElementById('loading').style.display='none'; }
 
-function showLoading() {
-  let i = 0;
-  document.getElementById('loadingMsg').textContent = loadingTexts[0];
-  loadingTimer = setInterval(() => { i=(i+1)%loadingTexts.length; document.getElementById('loadingMsg').textContent = loadingTexts[i]; }, 1800);
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('result').style.display = 'none';
-}
-
-function hideLoading() {
-  clearInterval(loadingTimer);
-  document.getElementById('loading').style.display = 'none';
-}
-
+// ── SYSTEM PROMPT ──
 const SYSTEM = `あなたは宅建試験の語呂合わせ専門AIです。
 ユーザーが送るキーワードとスタイル候補に基づき、記憶に強烈に刻み込まれる語呂合わせを生成してください。
 
@@ -576,7 +358,7 @@ const SYSTEM = `あなたは宅建試験の語呂合わせ専門AIです。
 {
   "topic": "トピック名（12文字以内）",
   "phrase": "語呂合わせ本体フレーズ（30文字以内）",
-  "rhythm": "読み方リズム（カタカナまたはひらがなで区切り文字はスラッシュ）",
+  "rhythm": "読み方リズム（カタカナまたはひらがなでスラッシュ区切り）",
   "story": "記憶定着用ストーリー（100から160文字）",
   "mapping": [
     { "key": "語呂の部分フレーズ", "value": "対応する法律的意味" }
@@ -587,32 +369,16 @@ const SYSTEM = `あなたは宅建試験の語呂合わせ専門AIです。
 
 # JSON生成時の絶対ルール
 - すべての文字列値にダブルクォーテーション記号を含めない
-- 改行コードを文字列値に含めない（改行は読点や句点で代替）
+- 改行コードを文字列値に含めない
 - バックスラッシュを文字列値に含めない
 - 括弧や記号は全角を使用する
 - JSONとして完全に有効な形式のみ出力する
 
 # スタイル別ルール（selectedStylesの中からランダムに1つ選んで使う）
-
-story（ストーリー仕立て）:
-- 登場人物（名前付き）が登場する具体的なドラマ
-- 感情・驚き・笑いが入ると記憶に残りやすい
-- 数字は擬人化または日常行動に置き換える
-
-dajare（ダジャレ・音遊び）:
-- 数字の読み方を大胆に変換（8はハチやヤやオッパチ）
-- 同音異義・近似音で法律用語を日常語に置換
-- クスっと笑えるシュールさ
-
-henteko（ヘンテコ・シュール）:
-- 宇宙人・巨大な食べ物・動物の会議・異世界設定など
-- なぜここに？という違和感が記憶フック
-- 法律的に正確な内容を突拍子もないシーンで表現
-
-song（歌・リズム）:
-- 5・7・5や7・7・5・7・5など日本語リズムに乗せる
-- phraseは声に出して心地よいリズム感を最優先
-- 繰り返し・韻踏みを活用
+story: 登場人物（名前付き）が登場する具体的なドラマ。感情・驚き・笑いが入ると記憶に残りやすい。
+dajare: 数字の読み方を大胆に変換。同音異義・近似音で法律用語を日常語に置換。クスっと笑えるシュールさ。
+henteko: 宇宙人・巨大な食べ物・動物の会議・異世界設定など。なぜここに？という違和感が記憶フック。
+song: 5・7・5や7・7・5・7・5など日本語リズムに乗せる。口ずさめるリズム感を最優先。
 
 # 法律上の絶対ルール
 - mapping は重要数字・条件・例外を3から5個網羅すること
@@ -620,118 +386,273 @@ song（歌・リズム）:
 - 宅建本試験で実際に問われる論点のみ扱う
 - 毎回ランダム性を持たせ、同じキーワードでも異なる語呂合わせを生成する`;
 
-async function generate() {
-  const kw = document.getElementById('keyword').value.trim();
-  if (!kw) { alert('キーワードを入力してください'); return; }
-  if (selectedStyles.size === 0) { alert('スタイルを1つ以上選んでください'); return; }
-
-  const btn = document.getElementById('genBtn');
-  btn.disabled = true;
-  showLoading();
-
-  const userMsg = `スタイル候補: ${[...selectedStyles].join('/')}
-キーワード: ${kw}
-ランダムシード: ${Math.random().toString(36).slice(2,7)}`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: SYSTEM,
-        messages: [{ role: 'user', content: userMsg }]
-      })
-    });
-
-    const data = await res.json();
-    const raw = (data.content||[]).map(c=>c.text||'').join('').trim();
-    
-    // Strip markdown code fences if present
-    let cleaned = raw.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
-    
-    // Parse with better error recovery
-    let r;
-    try {
-      r = JSON.parse(cleaned);
-    } catch(parseErr) {
-      // Try to extract JSON object with regex as fallback
-      const match = cleaned.match(/\{[\s\S]*\}/);
-      if (match) {
-        r = JSON.parse(match[0]);
-      } else {
-        throw new Error('JSONの解析に失敗しました。もう一度お試しください。');
-      }
-    }
-
-    hideLoading();
-    renderResult(r, kw);
-
-  } catch(e) {
-    hideLoading();
-    const el = document.getElementById('result');
-    el.innerHTML = `<div class="error-box">⚠️ エラーが発生しました：${esc(e.message)}<br>もう一度試してください。</div>`;
-    el.style.display = 'block';
-  }
-
-  btn.disabled = false;
+// ── API CALL ──
+async function callAPI(q, a, style) {
+  const styleHint = style === 'mix' ? 'story/dajare/henteko/song' : style;
+  const userMsg = `スタイル候補: ${styleHint}\nキーワード: ${q}\n答え: ${a||''}\nランダムシード: ${Math.random().toString(36).slice(2,6)}`;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:SYSTEM, messages:[{role:'user',content:userMsg}] })
+  });
+  const data = await res.json();
+  const raw = (data.content||[]).map(c=>c.text||'').join('').trim();
+  let cleaned = raw.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
+  let r;
+  try { r = JSON.parse(cleaned); }
+  catch { const m = cleaned.match(/\{[\s\S]*\}/); if(m) r=JSON.parse(m[0]); else throw new Error('JSONパース失敗'); }
+  return r;
 }
 
-function renderResult(r, kw) {
+// ── RENDER CARD (single) ──
+function renderCard(r, q) {
   const styleNames = { story:'🎭 ストーリー', dajare:'🎯 ダジャレ', henteko:'🦄 ヘンテコ', song:'🎵 リズム歌' };
-  const styleLabel = styleNames[r.style_used] || r.style_used || '';
-
-  const mappingHtml = (r.mapping||[]).map(m =>
-    `<div class="map-row"><span class="map-key">${esc(m.key)}</span><span class="map-val">${esc(m.value)}</span></div>`
-  ).join('');
-
-  const savedEnc = encodeURIComponent(JSON.stringify({...r, _kw: kw}));
-
-  const html = `
-  <div class="result-card">
-    <div class="rc-band">
-      <span class="topic-tag">${esc(r.topic||'')}</span>
-      <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,.9)">${esc(kw)}</span>
-      <span class="style-tag">${esc(styleLabel)}</span>
-    </div>
+  const mappingHtml = (r.mapping||[]).map(m=>`<div class="map-row"><span class="map-key">${esc(m.key)}</span><span class="map-val">${esc(m.value)}</span></div>`).join('');
+  const savedEnc = encodeURIComponent(JSON.stringify({...r, _kw:q}));
+  return `<div class="goro-card">
+    <div class="rc-band"><span class="q-text">${esc(q)}</span><span class="style-tag">${esc(styleNames[r.style_used]||r.style_used||'')}</span></div>
     <div class="rc-phrase">
       <div class="phrase-label">💡 語呂合わせ</div>
       <div class="phrase-main">${esc(r.phrase||'')}</div>
-      ${r.rhythm ? `<div class="phrase-rhythm">${esc(r.rhythm)}</div>` : ''}
+      ${r.rhythm?`<div class="phrase-rhythm">${esc(r.rhythm)}</div>`:''}
     </div>
-    <div class="rc-section">
-      <div class="section-label" style="color:var(--gold)">📖 ストーリー</div>
-      <div class="story-text">${esc(r.story||'')}</div>
-    </div>
-    <div class="rc-section">
-      <div class="section-label" style="color:var(--ink)">🔗 対応関係</div>
-      <div class="map-list">${mappingHtml}</div>
-    </div>
-    <div class="rc-section">
-      <div class="section-label" style="color:var(--teal)">⚠️ 試験ポイント</div>
-      <div class="tip-box">${esc(r.exam_tip||'')}</div>
-    </div>
+    <div class="rc-section"><div class="section-label" style="color:var(--gold)">📖 ストーリー</div><div class="story-text">${esc(r.story||'')}</div></div>
+    <div class="rc-section"><div class="section-label" style="color:var(--ink)">🔗 対応関係</div><div class="map-list">${mappingHtml}</div></div>
+    <div class="rc-section"><div class="section-label" style="color:var(--teal)">⚠️ 試験ポイント</div><div class="tip-box">${esc(r.exam_tip||'')}</div></div>
     <div class="rc-actions">
       <button class="act-btn primary" onclick="saveResult('${savedEnc}')">⭐ 保存</button>
-      <button class="act-btn" onclick="generate()">🔄 別バージョン</button>
-      <button class="act-btn" onclick="copyPhrase('${encodeURIComponent(r.phrase||'')}', this)">📋 コピー</button>
+      <button class="act-btn" onclick="generateSingle()">🔄 別バージョン</button>
+      <button class="act-btn" onclick="copyPhrase('${encodeURIComponent(r.phrase||'')}',this)">📋 コピー</button>
     </div>
   </div>`;
-
-  const el = document.getElementById('result');
-  el.innerHTML = html;
-  el.style.display = 'block';
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// ── SINGLE MODE ──
+async function generateSingle() {
+  const kw = document.getElementById('keyword').value.trim();
+  if(!kw){alert('キーワードを入力してください');return;}
+  if(selectedStyles.size===0){alert('スタイルを1つ以上選んでください');return;}
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true; showLoading();
+  try {
+    const style = [...selectedStyles][Math.floor(Math.random()*selectedStyles.size)];
+    const r = await callAPI(kw, '', style);
+    hideLoading();
+    const el = document.getElementById('result');
+    el.innerHTML = renderCard(r, kw);
+    el.style.display = 'block';
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+  } catch(e) {
+    hideLoading();
+    document.getElementById('result').innerHTML = `<div class="error-box">⚠️ エラー：${esc(e.message)}</div>`;
+    document.getElementById('result').style.display = 'block';
+  }
+  btn.disabled = false;
+}
+
+// ── FILE UPLOAD ──
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', () => { if(fileInput.files[0]) processFile(fileInput.files[0]); });
+
+function processFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => { parsedItems = parseText(e.target.result); showParsed(file.name); };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseText(text) {
+  const lines = text.split(/\r?\n/);
+  const items = [];
+  let pendingQ = null;
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) { pendingQ = null; continue; }
+    // タブ区切り
+    if (t.includes('\t')) {
+      const parts = t.split('\t');
+      const q = parts[0].replace(/^Q[：:]\s*/,'').trim();
+      const a = (parts[1]||'').replace(/^A[：:]\s*/,'').trim();
+      if (q.length > 3 && (q.includes('？')||q.includes('?')||q.length>8||a)) {
+        items.push({q, a});
+      }
+      pendingQ = null; continue;
+    }
+    // Q: / A: 形式
+    const qm = t.match(/^Q[：:]\s*(.+)/);
+    if (qm) { pendingQ = qm[1].trim(); continue; }
+    if (pendingQ !== null) {
+      const am = t.match(/^A[：:]\s*(.+)/);
+      if (am) { items.push({q:pendingQ, a:am[1].trim()}); pendingQ=null; continue; }
+      pendingQ = null;
+    }
+  }
+  return items.filter(x => x.q && x.q.length > 3);
+}
+
+function showParsed(filename) {
+  const preview = document.getElementById('parsedPreview');
+  const list    = document.getElementById('parsedList');
+  if (parsedItems.length === 0) {
+    list.innerHTML = '<div style="color:var(--red);font-size:13px;padding:8px">読み込めませんでした。フォーマットを確認してください。</div>';
+    document.getElementById('batchCtrl').style.display = 'none';
+    document.getElementById('ankiNote').style.display  = 'none';
+  } else {
+    list.innerHTML = parsedItems.map((item,i) =>
+      `<div class="parsed-item">
+        <span class="parsed-num">${i+1}.</span>
+        <div><div class="parsed-q">${esc(item.q)}</div>${item.a?`<div class="parsed-a">${esc(item.a)}</div>`:''}</div>
+      </div>`).join('');
+    document.getElementById('batchCtrl').style.display = 'block';
+    document.getElementById('ankiNote').style.display  = 'block';
+  }
+  preview.style.display = 'block';
+  uploadZone.querySelector('.uz-title').textContent = `✅ ${parsedItems.length}件 読み込み完了（${filename}）`;
+  // Reset done/progress states
+  document.getElementById('progressBox').style.display = 'none';
+  document.getElementById('doneBox').style.display     = 'none';
+  batchResults = [];
+}
+
+// ── BATCH GENERATION ──
+async function startBatch() {
+  if (parsedItems.length === 0) return;
+  stopFlag    = false;
+  batchResults = [];
+
+  const style   = document.getElementById('batchStyle').value;
+  const total   = parsedItems.length;
+  const batchBtn = document.getElementById('batchBtn');
+
+  batchBtn.disabled = true;
+  document.getElementById('batchCtrl').querySelector('label').textContent = '🎨 語呂合わせスタイル';
+
+  // Show progress, hide done
+  const progBox = document.getElementById('progressBox');
+  const doneBox = document.getElementById('doneBox');
+  progBox.style.display = 'block';
+  doneBox.style.display = 'none';
+  progBox.scrollIntoView({behavior:'smooth', block:'start'});
+
+  let errorCount = 0;
+
+  for (let i = 0; i < total; i++) {
+    if (stopFlag) break;
+
+    const item = parsedItems[i];
+
+    // Update progress UI
+    document.getElementById('progCount').textContent   = `${i+1} / ${total}`;
+    document.getElementById('progBar').style.width     = `${((i+1)/total)*100}%`;
+    document.getElementById('progCurrent').textContent = `▶ ${item.q}`;
+    document.getElementById('progStatus').textContent  = `残り約 ${total - i - 1} 件`;
+    document.getElementById('progErrors').textContent  = errorCount > 0 ? `エラー: ${errorCount}件` : '';
+
+    try {
+      const r = await callAPI(item.q, item.a, style);
+      batchResults.push({q:item.q, a:item.a, goro:r});
+    } catch(e) {
+      errorCount++;
+      batchResults.push({q:item.q, a:item.a, goro:null, error:e.message});
+    }
+
+    // Short pause to avoid rate limiting
+    if (i < total - 1 && !stopFlag) await new Promise(r => setTimeout(r, 350));
+  }
+
+  // Done
+  batchBtn.disabled = false;
+  progBox.style.display = 'none';
+
+  const successCount = batchResults.filter(r => r.goro).length;
+  const stopped      = stopFlag && batchResults.length < total;
+
+  document.getElementById('doneTitle').textContent = stopped ? '⏹ 停止しました' : '✅ 生成完了！';
+  document.getElementById('doneDesc').textContent  = `${successCount} 件の語呂合わせを生成しました。${errorCount>0?` (エラー ${errorCount} 件)`:''} Ankiカード用TXTをダウンロードしてインポートしてください。`;
+  document.getElementById('doneErrorNote').textContent = errorCount > 0 ? `※ エラーになった ${errorCount} 件は空欄で出力されます。` : '';
+  doneBox.style.display = 'block';
+  doneBox.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function stopBatch() { stopFlag = true; }
+
+function resetBulk() {
+  parsedItems  = [];
+  batchResults = [];
+  stopFlag     = false;
+  document.getElementById('doneBox').style.display     = 'none';
+  document.getElementById('progressBox').style.display = 'none';
+  document.getElementById('parsedPreview').style.display = 'none';
+  document.getElementById('batchCtrl').style.display   = 'none';
+  document.getElementById('ankiNote').style.display    = 'none';
+  document.getElementById('uploadZone').querySelector('.uz-title').textContent = 'テキストファイルをドロップ';
+  document.getElementById('fileInput').value = '';
+}
+
+// ── ANKI TSV DOWNLOAD ──
+// フォーマット: 表[TAB]裏[TAB]備考
+// 備考: 語呂合わせ + ストーリー + 対応関係 + 試験ポイント（改行は<br>でHTMLとして出力）
+function downloadAnkiTsv() {
+  if (batchResults.length === 0) return;
+
+  // Ankiヘッダー（オプション）
+  const headerLines = [
+    '#separator:tab',
+    '#html:true',
+    '#notetype:Basic',
+    '#deck:宅建 語呂合わせ',
+    '#tags:宅建 語呂合わせ',
+    '#columns:表\t裏\t備考',
+    ''
+  ];
+
+  const rows = batchResults.map(item => {
+    const front = item.q;
+    const back  = item.a || '';
+
+    let note = '';
+    if (item.goro) {
+      const r = item.goro;
+      // 備考をHTMLで組み立て（Ankiのhtmlモードに合わせる）
+      const mappingLines = (r.mapping||[]).map(m => `${m.key} → ${m.value}`).join('<br>');
+      note = [
+        `<b>💡 ${sanitizeTsv(r.phrase||'')}</b>`,
+        r.rhythm ? `<i>${sanitizeTsv(r.rhythm)}</i>` : '',
+        `<br>📖 ${sanitizeTsv(r.story||'')}`,
+        mappingLines ? `<br>🔗 ${mappingLines}` : '',
+        `<br>⚠️ ${sanitizeTsv(r.exam_tip||'')}`,
+      ].filter(Boolean).join('<br>');
+    } else {
+      note = item.error ? `エラー: ${sanitizeTsv(item.error)}` : '';
+    }
+
+    // タブと改行をエスケープ（フィールド内の改行は<br>で代替済み）
+    return [sanitizeTsv(front), sanitizeTsv(back), note].join('\t');
+  });
+
+  const content = headerLines.join('\n') + rows.join('\n') + '\n';
+  const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '宅建語呂合わせ_Ankiカード.txt';
+  a.click();
+}
+
+// タブ・改行をフィールド内で安全な文字に変換
+function sanitizeTsv(s) {
+  return String(s||'').replace(/\t/g,' ').replace(/\r?\n/g,' ').replace(/\r/g,' ');
+}
+
+// ── SAVE / COPY (single) ──
 function copyPhrase(enc, btn) {
   navigator.clipboard.writeText(decodeURIComponent(enc)).then(() => {
-    btn.textContent = '✅ コピー済み';
-    setTimeout(() => btn.textContent = '📋 コピー', 1500);
+    btn.textContent = '✅ コピー済み'; setTimeout(()=>btn.textContent='📋 コピー', 1500);
   });
 }
-
 function saveResult(enc) {
   const r = JSON.parse(decodeURIComponent(enc));
   savedItems.unshift(r);
@@ -739,10 +660,8 @@ function saveResult(enc) {
   try { localStorage.setItem('tgoro_v2', JSON.stringify(savedItems)); } catch{}
   renderSaved();
   const btn = event.target;
-  btn.textContent = '✅ 保存済み';
-  setTimeout(() => btn.textContent = '⭐ 保存', 1500);
+  btn.textContent = '✅ 保存済み'; setTimeout(()=>btn.textContent='⭐ 保存', 1500);
 }
-
 function clearSaved() {
   if (!savedItems.length) return;
   if (!confirm('保存した語呂合わせをすべて削除しますか？')) return;
@@ -750,19 +669,25 @@ function clearSaved() {
   try { localStorage.removeItem('tgoro_v2'); } catch{}
   renderSaved();
 }
-
 function renderSaved() {
   const el = document.getElementById('savedList');
   if (!savedItems.length) { el.innerHTML = '<div class="saved-empty">まだ保存がありません</div>'; return; }
-  el.innerHTML = savedItems.map((item, i) => `
-    <div class="saved-item" onclick="renderResult(savedItems[${i}], savedItems[${i}]._kw || savedItems[${i}].topic || '')">
+  el.innerHTML = savedItems.map((item,i) =>
+    `<div class="saved-item" onclick="showSaved(${i})">
       <span class="saved-phrase">${esc(item.phrase||'')}</span>
       <span class="saved-topic">${esc(item.topic||'')}</span>
     </div>`).join('');
 }
+function showSaved(i) {
+  const item = savedItems[i];
+  const el = document.getElementById('result');
+  el.innerHTML = renderCard(item, item._kw||item.topic||'');
+  el.style.display = 'block';
+  document.querySelector('.tab[data-tab="single"]').click();
+  el.scrollIntoView({behavior:'smooth', block:'start'});
+}
 
-document.getElementById('keyword').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
-
+document.getElementById('keyword').addEventListener('keydown', e => { if(e.key==='Enter') generateSingle(); });
 renderSaved();
 </script>
 </body>
