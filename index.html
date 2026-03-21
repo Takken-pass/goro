@@ -220,7 +220,7 @@ header p{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.7}
     <div class="field">
       <label class="field-label">🎨 スタイル（複数選択可）</label>
       <div class="style-grid">
-        <div class="style-btn" data-v="seito"><span class="s-icon">📖</span><span class="s-name">正統派</span><span class="s-desc">音の対応が明確な王道語呂</span></div>
+        <div class="style-btn on" data-v="seito"><span class="s-icon">📖</span><span class="s-name">正統派</span><span class="s-desc">音の対応が明確な王道語呂</span></div>
         <div class="style-btn on" data-v="story"><span class="s-icon">🎭</span><span class="s-name">ストーリー</span><span class="s-desc">登場人物が動くドラマ仕立て</span></div>
         <div class="style-btn on" data-v="dajare"><span class="s-icon">🎯</span><span class="s-name">ダジャレ・音遊び</span><span class="s-desc">数字・音のクスっと読み換え</span></div>
         <div class="style-btn on" data-v="henteko"><span class="s-icon">🦄</span><span class="s-name">ヘンテコ・シュール</span><span class="s-desc">宇宙人・食べ物…意外な組み合わせ</span></div>
@@ -317,7 +317,7 @@ header p{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.7}
 </div>
 <script>
 // ── STATE ──
-let selectedStyles = new Set(['story','dajare','henteko','song']);
+let selectedStyles = new Set(['seito','story','dajare','henteko','song']);
 let savedItems = [];
 try { savedItems = JSON.parse(localStorage.getItem('tgoro_v2')||'[]'); } catch{}
 let parsedItems = [];
@@ -378,7 +378,7 @@ const SYSTEM = `あなたは宅建試験の語呂合わせ専門AIです。
 - JSONとして完全に有効な形式のみ出力する
 
 # スタイル別ルール（selectedStylesの中からランダムに1つ選んで使う）
-seito: 数字や用語を音読みで直接対応させる正統派の語呂合わせ。例）「いちよん」→14、「さんぜん」→3000。フレーズは短く明快で、法律用語と音の対応が一目でわかること。装飾やストーリーは最小限にし、覚えやすい音のリズムを最優先にする。
+seito: 数字を語呂読みして短い日本語フレーズに落とし込む王道スタイル。「1192（いいくに）作ろう鎌倉幕府」「794（なくよ）うぐいす平城京」のように、数字の読み方をそのまま言葉に変換して意味ある一文を作る。ルール：①数字は必ず語呂読み（8→は・や・ぱ、5→ご・い・こ、3→さん・み・ざ等）②フレーズは10文字前後の短い一文③意味が通じる自然な日本語④数字以外のキーワードも頭文字や音で語呂化する。storyやhentekoのような装飾・登場人物・奇抜な設定は不要。シンプルに「数字＝フレーズ」の対応だけで完結させること。
 story: 登場人物（名前付き）が登場する具体的なドラマ。感情・驚き・笑いが入ると記憶に残りやすい。
 dajare: 数字の読み方を大胆に変換。同音異義・近似音で法律用語を日常語に置換。クスっと笑えるシュールさ。
 henteko: 宇宙人・巨大な食べ物・動物の会議・異世界設定など。なぜここに？という違和感が記憶フック。
