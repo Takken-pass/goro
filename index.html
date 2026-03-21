@@ -303,7 +303,7 @@ header p{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.7}
     <div class="done-icon">✅</div>
     <h3 id="doneTitle">生成完了！</h3>
     <p id="doneDesc"></p>
-    <button class="btn-dl" onclick="downloadAnkiTsv()">💾 Ankiカード用TXTをダウンロード</button>
+    <button class="btn-dl" onclick="downloadAnkiTsv()">📋 Ankiカード用テキストを表示・コピー</button>
     <br>
     <button class="btn-dl-again" onclick="resetBulk()">🔄 別のファイルで再生成</button>
     <div class="done-error-note" id="doneErrorNote"></div>
@@ -519,19 +519,37 @@ function showParsed(filename) {
 }
 
 // ── BATCH GENERATION ──
+async function callAPIWithRetry(q, a, style, maxRetry = 2) {
+  let lastErr;
+  for (let attempt = 0; attempt <= maxRetry; attempt++) {
+    try {
+      if (attempt > 0) {
+        // リトライ前に少し待つ（exponential backoff）
+        await new Promise(r => setTimeout(r, 1500 * attempt));
+      }
+      return await callAPI(q, a, style);
+    } catch(e) {
+      lastErr = e;
+      // レートリミットエラーなら長めに待ってリトライ
+      if (e.message && (e.message.includes('rate') || e.message.includes('529') || e.message.includes('overload'))) {
+        await new Promise(r => setTimeout(r, 3000 * (attempt + 1)));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 async function startBatch() {
   if (parsedItems.length === 0) return;
-  stopFlag    = false;
+  stopFlag     = false;
   batchResults = [];
 
-  const style   = document.getElementById('batchStyle').value;
-  const total   = parsedItems.length;
+  const style    = document.getElementById('batchStyle').value;
+  const total    = parsedItems.length;
   const batchBtn = document.getElementById('batchBtn');
 
   batchBtn.disabled = true;
-  document.getElementById('batchCtrl').querySelector('label').textContent = '🎨 語呂合わせスタイル';
 
-  // Show progress, hide done
   const progBox = document.getElementById('progressBox');
   const doneBox = document.getElementById('doneBox');
   progBox.style.display = 'block';
@@ -545,26 +563,26 @@ async function startBatch() {
 
     const item = parsedItems[i];
 
-    // Update progress UI
-    document.getElementById('progCount').textContent   = `${i+1} / ${total}`;
-    document.getElementById('progBar').style.width     = `${((i+1)/total)*100}%`;
+    document.getElementById('progCount').textContent   = `${i + 1} / ${total}`;
+    document.getElementById('progBar').style.width     = `${((i + 1) / total) * 100}%`;
     document.getElementById('progCurrent').textContent = `▶ ${item.q}`;
     document.getElementById('progStatus').textContent  = `残り約 ${total - i - 1} 件`;
-    document.getElementById('progErrors').textContent  = errorCount > 0 ? `エラー: ${errorCount}件` : '';
+    document.getElementById('progErrors').textContent  = errorCount > 0 ? `⚠️ エラー ${errorCount} 件（スキップして続行中）` : '';
 
     try {
-      const r = await callAPI(item.q, item.a, style);
-      batchResults.push({q:item.q, a:item.a, goro:r});
+      const r = await callAPIWithRetry(item.q, item.a, style);
+      batchResults.push({q: item.q, a: item.a, goro: r});
     } catch(e) {
       errorCount++;
-      batchResults.push({q:item.q, a:item.a, goro:null, error:e.message});
+      batchResults.push({q: item.q, a: item.a, goro: null, error: e.message});
+      // エラーでも止めず続行
     }
 
-    // Short pause to avoid rate limiting
-    if (i < total - 1 && !stopFlag) await new Promise(r => setTimeout(r, 350));
+    // レートリミット対策：1件ごとに1秒待つ
+    if (i < total - 1 && !stopFlag) await new Promise(r => setTimeout(r, 1000));
   }
 
-  // Done
+  // 完了処理（stopでも errorでも必ずDLボタンを出す）
   batchBtn.disabled = false;
   progBox.style.display = 'none';
 
@@ -572,13 +590,32 @@ async function startBatch() {
   const stopped      = stopFlag && batchResults.length < total;
 
   document.getElementById('doneTitle').textContent = stopped ? '⏹ 停止しました' : '✅ 生成完了！';
-  document.getElementById('doneDesc').textContent  = `${successCount} 件の語呂合わせを生成しました。${errorCount>0?` (エラー ${errorCount} 件)`:''} Ankiカード用TXTをダウンロードしてインポートしてください。`;
-  document.getElementById('doneErrorNote').textContent = errorCount > 0 ? `※ エラーになった ${errorCount} 件は空欄で出力されます。` : '';
+  document.getElementById('doneDesc').textContent  =
+    `${successCount} 件の語呂合わせを生成しました。` +
+    (errorCount > 0 ? `（エラー ${errorCount} 件はスキップ）` : '') +
+    ' Ankiカード用TXTをダウンロードしてください。';
+  document.getElementById('doneErrorNote').textContent =
+    errorCount > 0 ? `※ エラーになった ${errorCount} 件は備考欄が空欄で出力されます。` : '';
+
   doneBox.style.display = 'block';
   doneBox.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-function stopBatch() { stopFlag = true; }
+function stopBatch() {
+  stopFlag = true;
+  // 停止後もすぐDLできるよう完了画面を出す
+  const done = batchResults.length;
+  if (done > 0) {
+    document.getElementById('progressBox').style.display = 'none';
+    document.getElementById('batchBtn').disabled = false;
+    const successCount = batchResults.filter(r => r.goro).length;
+    document.getElementById('doneTitle').textContent = '⏹ 停止しました';
+    document.getElementById('doneDesc').textContent  = `${successCount} 件まで生成済みです。このままダウンロードできます。`;
+    document.getElementById('doneErrorNote').textContent = '';
+    document.getElementById('doneBox').style.display = 'block';
+    document.getElementById('doneBox').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
 
 function resetBulk() {
   parsedItems  = [];
@@ -593,13 +630,8 @@ function resetBulk() {
   document.getElementById('fileInput').value = '';
 }
 
-// ── ANKI TSV DOWNLOAD ──
-// フォーマット: 表[TAB]裏[TAB]備考
-// 備考: 語呂合わせ + ストーリー + 対応関係 + 試験ポイント（改行は<br>でHTMLとして出力）
-function downloadAnkiTsv() {
-  if (batchResults.length === 0) return;
-
-  // Ankiヘッダー（オプション）
+// ── ANKI TSV 生成＆表示 ──
+function buildAnkiTsv() {
   const headerLines = [
     '#separator:tab',
     '#html:true',
@@ -609,15 +641,12 @@ function downloadAnkiTsv() {
     '#columns:表\t裏\t備考',
     ''
   ];
-
   const rows = batchResults.map(item => {
     const front = item.q;
     const back  = item.a || '';
-
     let note = '';
     if (item.goro) {
       const r = item.goro;
-      // 備考をHTMLで組み立て（Ankiのhtmlモードに合わせる）
       const mappingLines = (r.mapping||[]).map(m => `${m.key} → ${m.value}`).join('<br>');
       note = [
         `<b>💡 ${sanitizeTsv(r.phrase||'')}</b>`,
@@ -629,17 +658,87 @@ function downloadAnkiTsv() {
     } else {
       note = item.error ? `エラー: ${sanitizeTsv(item.error)}` : '';
     }
-
-    // タブと改行をエスケープ（フィールド内の改行は<br>で代替済み）
     return [sanitizeTsv(front), sanitizeTsv(back), note].join('\t');
   });
+  return headerLines.join('\n') + rows.join('\n') + '\n';
+}
 
-  const content = headerLines.join('\n') + rows.join('\n') + '\n';
-  const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = '宅建語呂合わせ_Ankiカード.txt';
-  a.click();
+function downloadAnkiTsv() {
+  if (batchResults.length === 0) return;
+  const content = buildAnkiTsv();
+
+  // ① まずBlob URLでDLを試みる
+  try {
+    const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = '宅建語呂合わせ_Ankiカード.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    // DLが成功したように見えたらテキストエリアも念のため表示
+  } catch(e) {
+    // 失敗時はテキストエリア表示にフォールバック
+  }
+
+  // ② 常にテキストエリアも表示（環境に関わらずコピーできるよう）
+  showTextArea(content);
+}
+
+function showTextArea(content) {
+  // すでにあれば更新、なければ作成
+  let box = document.getElementById('tsvOutputBox');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'tsvOutputBox';
+    box.style.cssText = 'margin-top:16px;background:#fff;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;';
+    document.getElementById('doneBox').after(box);
+  }
+  const lineCount = batchResults.length;
+  box.innerHTML = `
+    <div style="background:var(--ink);color:var(--paper);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <span style="font-size:13px;font-weight:700;">📋 Ankiインポート用テキスト（${lineCount}件）</span>
+      <button onclick="copyTsvText()" id="copyTsvBtn"
+        style="padding:6px 16px;background:var(--teal);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
+        コピー
+      </button>
+    </div>
+    <div style="padding:12px 16px;background:var(--teal-light);font-size:11px;color:var(--teal);line-height:1.7;">
+      <b>使い方：</b>①下のテキストを全選択してコピー　②テキストエディタ（メモ帳等）に貼り付けて <code>.txt</code> で保存　③Ankiの「ファイルからインポート」で読み込み
+    </div>
+    <textarea id="tsvTextArea" readonly
+      style="width:100%;height:220px;padding:14px;font-family:monospace;font-size:11px;border:none;border-top:1px solid var(--border);resize:vertical;outline:none;background:var(--paper);color:var(--ink);line-height:1.6;"
+      >${escAttr(content)}</textarea>`;
+  box.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function escAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function copyTsvText() {
+  const ta  = document.getElementById('tsvTextArea');
+  const btn = document.getElementById('copyTsvBtn');
+  if (!ta) return;
+  ta.select();
+  try {
+    // モダンAPI
+    navigator.clipboard.writeText(ta.value).then(() => {
+      btn.textContent = '✅ コピー完了！';
+      setTimeout(() => btn.textContent = 'コピー', 2000);
+    }).catch(() => {
+      // フォールバック
+      document.execCommand('copy');
+      btn.textContent = '✅ コピー完了！';
+      setTimeout(() => btn.textContent = 'コピー', 2000);
+    });
+  } catch(e) {
+    document.execCommand('copy');
+    btn.textContent = '✅ コピー完了！';
+    setTimeout(() => btn.textContent = 'コピー', 2000);
+  }
 }
 
 // タブ・改行をフィールド内で安全な文字に変換
