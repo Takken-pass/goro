@@ -220,6 +220,7 @@ header p{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.7}
     <div class="field">
       <label class="field-label">🎨 スタイル（複数選択可）</label>
       <div class="style-grid">
+        <div class="style-btn" data-v="seito"><span class="s-icon">📖</span><span class="s-name">正統派</span><span class="s-desc">音の対応が明確な王道語呂</span></div>
         <div class="style-btn on" data-v="story"><span class="s-icon">🎭</span><span class="s-name">ストーリー</span><span class="s-desc">登場人物が動くドラマ仕立て</span></div>
         <div class="style-btn on" data-v="dajare"><span class="s-icon">🎯</span><span class="s-name">ダジャレ・音遊び</span><span class="s-desc">数字・音のクスっと読み換え</span></div>
         <div class="style-btn on" data-v="henteko"><span class="s-icon">🦄</span><span class="s-name">ヘンテコ・シュール</span><span class="s-desc">宇宙人・食べ物…意外な組み合わせ</span></div>
@@ -275,6 +276,7 @@ header p{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.7}
     <label>🎨 語呂合わせスタイル</label>
     <div class="batch-row">
       <select class="batch-style-select" id="batchStyle">
+        <option value="seito">📖 正統派</option>
         <option value="story">🎭 ストーリー仕立て</option>
         <option value="dajare">🎯 ダジャレ・音遊び</option>
         <option value="henteko">🦄 ヘンテコ・シュール</option>
@@ -376,6 +378,7 @@ const SYSTEM = `あなたは宅建試験の語呂合わせ専門AIです。
 - JSONとして完全に有効な形式のみ出力する
 
 # スタイル別ルール（selectedStylesの中からランダムに1つ選んで使う）
+seito: 数字や用語を音読みで直接対応させる正統派の語呂合わせ。例）「いちよん」→14、「さんぜん」→3000。フレーズは短く明快で、法律用語と音の対応が一目でわかること。装飾やストーリーは最小限にし、覚えやすい音のリズムを最優先にする。
 story: 登場人物（名前付き）が登場する具体的なドラマ。感情・驚き・笑いが入ると記憶に残りやすい。
 dajare: 数字の読み方を大胆に変換。同音異義・近似音で法律用語を日常語に置換。クスっと笑えるシュールさ。
 henteko: 宇宙人・巨大な食べ物・動物の会議・異世界設定など。なぜここに？という違和感が記憶フック。
@@ -389,7 +392,7 @@ song: 5・7・5や7・7・5・7・5など日本語リズムに乗せる。口ず
 
 // ── API CALL ──
 async function callAPI(q, a, style, existingGoro = '') {
-  const styleHint = style === 'mix' ? 'story/dajare/henteko/song' : style;
+  const styleHint = style === 'mix' ? 'seito/story/dajare/henteko/song' : style;
   const goroHint = existingGoro ? `\n参考（既存の語呂合わせ）: ${existingGoro}` : '';
   const userMsg = `スタイル候補: ${styleHint}\nキーワード: ${q}\n答え: ${a||''}${goroHint}\nランダムシード: ${Math.random().toString(36).slice(2,6)}`;
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -408,7 +411,7 @@ async function callAPI(q, a, style, existingGoro = '') {
 
 // ── RENDER CARD (single) ──
 function renderCard(r, q) {
-  const styleNames = { story:'🎭 ストーリー', dajare:'🎯 ダジャレ', henteko:'🦄 ヘンテコ', song:'🎵 リズム歌' };
+  const styleNames = { seito:'📖 正統派', story:'🎭 ストーリー', dajare:'🎯 ダジャレ', henteko:'🦄 ヘンテコ', song:'🎵 リズム歌' };
   const mappingHtml = (r.mapping||[]).map(m=>`<div class="map-row"><span class="map-key">${esc(m.key)}</span><span class="map-val">${esc(m.value)}</span></div>`).join('');
   const savedEnc = encodeURIComponent(JSON.stringify({...r, _kw:q}));
   return `<div class="goro-card">
@@ -479,43 +482,60 @@ function processFile(file) {
 }
 
 function detectEncoding(bytes) {
-  // BOM チェック
+  // 1. BOM チェック
   if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) return 'UTF-8';
   if (bytes[0] === 0xFF && bytes[1] === 0xFE) return 'UTF-16LE';
   if (bytes[0] === 0xFE && bytes[1] === 0xFF) return 'UTF-16BE';
 
-  // ISO-2022-JP チェック（ESCシーケンスの存在）
+  // 2. ISO-2022-JP チェック（ESCシーケンス）
   for (let i = 0; i < bytes.length - 2; i++) {
     if (bytes[i] === 0x1B && bytes[i+1] === 0x24) return 'ISO-2022-JP';
   }
 
-  // UTF-8 バリデーション
+  // 3. UTF-8 バリデーション
   let isUtf8 = true;
   for (let i = 0; i < bytes.length; i++) {
     const b = bytes[i];
     if (b <= 0x7F) continue;
     if ((b & 0xE0) === 0xC0) {
-      if ((bytes[i+1] & 0xC0) !== 0x80) { isUtf8 = false; break; }
+      if (i+1 >= bytes.length || (bytes[i+1] & 0xC0) !== 0x80) { isUtf8 = false; break; }
       i += 1;
     } else if ((b & 0xF0) === 0xE0) {
-      if ((bytes[i+1] & 0xC0) !== 0x80 || (bytes[i+2] & 0xC0) !== 0x80) { isUtf8 = false; break; }
+      if (i+2 >= bytes.length || (bytes[i+1] & 0xC0) !== 0x80 || (bytes[i+2] & 0xC0) !== 0x80) { isUtf8 = false; break; }
       i += 2;
     } else if ((b & 0xF8) === 0xF0) {
-      if ((bytes[i+1] & 0xC0) !== 0x80 || (bytes[i+2] & 0xC0) !== 0x80 || (bytes[i+3] & 0xC0) !== 0x80) { isUtf8 = false; break; }
+      if (i+3 >= bytes.length || (bytes[i+1] & 0xC0) !== 0x80 || (bytes[i+2] & 0xC0) !== 0x80 || (bytes[i+3] & 0xC0) !== 0x80) { isUtf8 = false; break; }
       i += 3;
     } else { isUtf8 = false; break; }
   }
   if (isUtf8) return 'UTF-8';
 
-  // EUC-JP チェック（0x8E/0x8F の存在）
+  // 4. CP932(Shift-JIS) vs EUC-JP を正確に判定
+  //    CP932先行バイト: 0x81-0x9F または 0xE0-0xFC
+  //    EUC-JP先行バイト: 0xA1-0xFE（かつ2バイト目も0xA1-0xFE）
+  //    CP932の2バイト目が偶然0xA1-0xFEに入るとEUC誤判定するため
+  //    CP932特有バイト(0x81-0x9F)の出現数で判定する
+  let cp932Score = 0;
+  let eucScore   = 0;
   for (let i = 0; i < bytes.length - 1; i++) {
-    if (bytes[i] >= 0xA1 && bytes[i] <= 0xFE) {
-      if (bytes[i+1] >= 0xA1 && bytes[i+1] <= 0xFE) return 'EUC-JP';
+    const b  = bytes[i];
+    const b2 = bytes[i+1];
+    // CP932特有の先行バイト範囲 (0x81-0x9F はEUC-JPには存在しない)
+    if (b >= 0x81 && b <= 0x9F) {
+      cp932Score += 2; i++;
+    }
+    // CP932の第2面 (0xE0-0xFC)
+    else if (b >= 0xE0 && b <= 0xFC && b2 >= 0x40 && b2 <= 0xFC && b2 !== 0x7F) {
+      cp932Score += 1; i++;
+    }
+    // EUC-JP特有（0xA1-0xFEペア、ただし両方0xA1以上）
+    else if (b >= 0xA1 && b <= 0xFE && b2 >= 0xA1 && b2 <= 0xFE) {
+      eucScore += 1; i++;
     }
   }
 
-  // デフォルトは Shift-JIS (CP932)
-  return 'Shift-JIS';
+  if (eucScore > 0 && cp932Score === 0) return 'EUC-JP';
+  return 'Shift-JIS'; // CP932はShift-JISとして読み込む（ブラウザのShift-JISはCP932互換）
 }
 
 function parseText(text) {
