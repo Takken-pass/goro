@@ -205,6 +205,26 @@ header p{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.7}
   <p>キーワード入力で1問生成、またはファイル一括アップロードでAnkiカードを作成</p>
 </header>
 
+<!-- API KEY BAR -->
+<div id="apiKeyBar" style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;box-shadow:0 2px 12px var(--shadow);">
+  <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--muted);margin-bottom:8px;">🔑 ANTHROPIC API KEY</div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." maxlength="200"
+      style="flex:1;min-width:200px;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;
+             font-family:monospace;font-size:13px;color:var(--ink);background:var(--paper);outline:none;">
+    <button onclick="saveApiKey()"
+      style="padding:9px 18px;background:var(--ink);color:#fff;border:none;border-radius:8px;
+             font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">保存</button>
+    <button onclick="clearApiKey()"
+      style="padding:9px 14px;background:#fff;color:var(--muted);border:1.5px solid var(--border);
+             border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">クリア</button>
+  </div>
+  <div id="apiKeyStatus" style="margin-top:8px;font-size:12px;color:var(--muted);"></div>
+  <div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.7;">
+    ※ キーはブラウザのlocalStorageに保存されます。<a href="https://console.anthropic.com/" target="_blank" style="color:var(--teal);">Anthropic Console</a>で取得できます。
+  </div>
+</div>
+
 <div class="tabs">
   <div class="tab active" data-tab="single">✏️ 1問ずつ</div>
   <div class="tab" data-tab="bulk">📄 ファイル一括 → Ankiカード</div>
@@ -396,9 +416,17 @@ async function callAPI(q, a, style, existingGoro = '') {
   const goroHint = existingGoro ? `\n参考（既存の語呂合わせ）: ${existingGoro}` : '';
   const userMsg = `スタイル候補: ${styleHint}\nキーワード: ${q}\n答え: ${a||''}${goroHint}\nランダムシード: ${Math.random().toString(36).slice(2,6)}`;
 
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('APIキーが設定されていません。画面上部のAPIキー欄に入力してください。');
+
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
     body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:SYSTEM, messages:[{role:'user',content:userMsg}] })
   });
 
@@ -936,7 +964,41 @@ function showSaved(i) {
   el.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
+// ── API KEY MANAGEMENT ──
+function getApiKey() {
+  return localStorage.getItem('anthropic_api_key') || '';
+}
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) { alert('APIキーを入力してください'); return; }
+  if (!key.startsWith('sk-ant-')) {
+    if (!confirm('APIキーの形式が通常と異なります（sk-ant-で始まらない）。このまま保存しますか？')) return;
+  }
+  localStorage.setItem('anthropic_api_key', key);
+  updateApiKeyStatus();
+  document.getElementById('apiKeyInput').value = '';
+  alert('✅ APIキーを保存しました');
+}
+function clearApiKey() {
+  if (!confirm('APIキーを削除しますか？')) return;
+  localStorage.removeItem('anthropic_api_key');
+  document.getElementById('apiKeyInput').value = '';
+  updateApiKeyStatus();
+}
+function updateApiKeyStatus() {
+  const key = getApiKey();
+  const el  = document.getElementById('apiKeyStatus');
+  if (key) {
+    el.innerHTML = `✅ APIキー設定済み：<code style="background:var(--paper2);padding:1px 6px;border-radius:4px;">${key.slice(0,12)}…${key.slice(-4)}</code>`;
+    el.style.color = 'var(--teal)';
+  } else {
+    el.textContent = '⚠️ APIキー未設定 — 上の欄に入力して「保存」してください';
+    el.style.color = 'var(--red)';
+  }
+}
+
 document.getElementById('keyword').addEventListener('keydown', e => { if(e.key==='Enter') generateSingle(); });
+updateApiKeyStatus();
 renderSaved();
 </script>
 </body>
