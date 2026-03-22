@@ -209,7 +209,7 @@ header p{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.7}
 <div id="apiKeyBar" style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;box-shadow:0 2px 12px var(--shadow);">
   <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--muted);margin-bottom:8px;">🔑 ANTHROPIC API KEY</div>
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." maxlength="200"
+    <input type="password" id="apiKeyInput" placeholder="APIキーを入力..." maxlength="300"
       style="flex:1;min-width:200px;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;
              font-family:monospace;font-size:13px;color:var(--ink);background:var(--paper);outline:none;">
     <button onclick="saveApiKey()"
@@ -219,9 +219,10 @@ header p{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.7}
       style="padding:9px 14px;background:#fff;color:var(--muted);border:1.5px solid var(--border);
              border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">クリア</button>
   </div>
-  <div id="apiKeyStatus" style="margin-top:8px;font-size:12px;color:var(--muted);"></div>
+  <div id="apiKeyStatus" style="margin-top:8px;font-size:12px;"></div>
   <div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.7;">
-    ※ キーはブラウザのlocalStorageに保存されます。<a href="https://console.anthropic.com/" target="_blank" style="color:var(--teal);">Anthropic Console</a>で取得できます。
+    ※ キーはこのブラウザのlocalStorageのみに保存されます。外部には送信されません。<br>
+    <a href="https://console.anthropic.com/" target="_blank" style="color:var(--teal);">Anthropic Console</a> の「API Keys」から発行できます。
   </div>
 </div>
 
@@ -417,7 +418,7 @@ async function callAPI(q, a, style, existingGoro = '') {
   const userMsg = `スタイル候補: ${styleHint}\nキーワード: ${q}\n答え: ${a||''}${goroHint}\nランダムシード: ${Math.random().toString(36).slice(2,6)}`;
 
   const apiKey = getApiKey();
-  if (!apiKey) throw new Error('APIキーが設定されていません。画面上部のAPIキー欄に入力してください。');
+  if (!apiKey) throw new Error('APIキーが未設定です。画面上部の入力欄にAPIキーを入力して「保存」してください。');
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -964,32 +965,28 @@ function showSaved(i) {
   el.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-// ── API KEY MANAGEMENT ──
+// ── API KEY ──
 function getApiKey() {
   return localStorage.getItem('anthropic_api_key') || '';
 }
 function saveApiKey() {
   const key = document.getElementById('apiKeyInput').value.trim();
   if (!key) { alert('APIキーを入力してください'); return; }
-  if (!key.startsWith('sk-ant-')) {
-    if (!confirm('APIキーの形式が通常と異なります（sk-ant-で始まらない）。このまま保存しますか？')) return;
-  }
   localStorage.setItem('anthropic_api_key', key);
-  updateApiKeyStatus();
   document.getElementById('apiKeyInput').value = '';
-  alert('✅ APIキーを保存しました');
+  updateApiKeyStatus();
 }
 function clearApiKey() {
   if (!confirm('APIキーを削除しますか？')) return;
   localStorage.removeItem('anthropic_api_key');
-  document.getElementById('apiKeyInput').value = '';
   updateApiKeyStatus();
 }
 function updateApiKeyStatus() {
   const key = getApiKey();
   const el  = document.getElementById('apiKeyStatus');
   if (key) {
-    el.innerHTML = `✅ APIキー設定済み：<code style="background:var(--paper2);padding:1px 6px;border-radius:4px;">${key.slice(0,12)}…${key.slice(-4)}</code>`;
+    const masked = key.slice(0,8) + '…' + key.slice(-4);
+    el.innerHTML = '✅ <b>APIキー設定済み</b>：<code style="background:var(--paper2);padding:1px 6px;border-radius:4px;">' + masked + '</code>';
     el.style.color = 'var(--teal)';
   } else {
     el.textContent = '⚠️ APIキー未設定 — 上の欄に入力して「保存」してください';
